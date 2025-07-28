@@ -580,7 +580,7 @@ const BMIPointerRobust = () => {
           width={1517}
           height={2200}
           style={{
-            position: "absolute",
+            // position: "absolute",
             width: "1517px",
             height: "2200px",
             display: "none",
