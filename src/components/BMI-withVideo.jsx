@@ -547,17 +547,20 @@ const BMIPointerRobust = () => {
         margin: "auto",
         background: "black",
         objectFit: "contain",
+         overflow: "hidden",
+         
       }}
     >
       <div
         id="container"
         ref={containerRef}
         style={{
-          position: "absolute",
+          // position: "absolute",
           width: "1517px",
           height: "2200px",
           transformOrigin: "top left",
           border: "5px dashed red",
+          transform: "scale(0.2)",
         }}
       >
         <video
