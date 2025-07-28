@@ -539,7 +539,7 @@ const BMIPointerRobust = () => {
     <div
       className="wrapper"
       style={{
-        position: "relative",
+        // position: "relative",
         width: "100vw",
         height: "calc(100vw * 2200 / 1517)",
         maxHeight: "100vh",
