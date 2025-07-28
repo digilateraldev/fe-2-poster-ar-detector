@@ -551,29 +551,17 @@ const BMIPointerRobust = () => {
   return (
     <div
       className="wrapper"
-      // style={{
-      //   // position: "relative",
-      //   width: "100vw",
-      //   height: "calc(100vw * 2200 / 1517)",
-      //   // maxHeight: "100vh",
-      //   // maxWidth: "calc(100vh * 1517 / 2200)",
-      //   margin: "auto",
-      //   background: "black",
-      //   objectFit: "contain",
-      //    overflow: "hidden",
-         
-      // }}
       style={{
-        position: "relative",
+        // position: "relative",
         width: "100vw",
-        height: "100vh",
-        margin: "0",
-        padding: "0",
-        background: "black",  
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        height: "calc(100vw * 2200 / 1517)",
+        // maxHeight: "100vh",
+        // maxWidth: "calc(100vh * 1517 / 2200)",
+        margin: "auto",
+        background: "black",
+        objectFit: "contain",
+         overflow: "hidden",
+         
       }}
     >
       <div
