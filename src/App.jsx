@@ -9,10 +9,6 @@ import { useState } from 'react';
 // import MarkerDetectionVisualizer from './components/MarkerDetectionVisualizer'
 import BMISelectionApp from './components/BMISelectionApp'
 import BMIPointerRobust from './components/BMI-withVideo';
-<<<<<<< HEAD
-=======
-
->>>>>>> c640ad205662cef98db08cf11f1bef5cf3047086
 import './App.css'
 
 function App() {
@@ -25,14 +21,10 @@ function App() {
       {/* <BMIPointerIntegrated /> */}
       {/* <MarkerSizeDetectionTest /> */}
       {/* <MarkerDetectionVisualizer /> */}
-<<<<<<< HEAD
       {/* <BMISelectionApp /> */}
-      <BMIPointerRobust />
-=======
+      {/* <BMIPointerRobust /> */}
 {/*       <BMISelectionApp /> */}
             <BMIPointerRobust />
-
->>>>>>> c640ad205662cef98db08cf11f1bef5cf3047086
     </>
   )
 }
