@@ -560,7 +560,9 @@ const BMIPointerRobust = () => {
           height: "2200px",
           transformOrigin: "top left",
           border: "5px dashed red",
-          transform: "scale(0.2)",
+          transform: "scale(0)",
+           opacity: 0,             // Prevent flash of full size
+    transition: "opacity 0.2s ease",
         }}
       >
         <video
