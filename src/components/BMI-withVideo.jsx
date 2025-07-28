@@ -560,7 +560,7 @@ const BMIPointerRobust = () => {
         margin: "auto",
         background: "black",
         objectFit: "contain",
-         overflow: "hidden",
+        //  overflow: "hidden",
          
       }}
     >

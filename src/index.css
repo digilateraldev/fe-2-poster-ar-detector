@@ -29,15 +29,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden; /* prevents scrollbars */
-  max-width: 100vw;
-  max-height: 100vh;
-  /* box-sizing: border-box; */
-}
+/*  */
 
 
 h1 {
