@@ -252,59 +252,59 @@ const BMIPointerRobust = () => {
     return Math.abs(area) / 2;
   };
 
-//   const handleZoneDetection = (zoneName) => {
-//     if (zoneName !== currentZone) {
-//       setCurrentZone(zoneName);
+  const handleZoneDetection = (zoneName) => {
+    if (zoneName !== currentZone) {
+      setCurrentZone(zoneName);
       
-//       // Clear any existing timeout
-//       if (zoneTimeoutRef.current) {
-//         clearTimeout(zoneTimeoutRef.current);
-//       }
-      
-//       // Set a new timeout to show video after 1 second of continuous detection
-//       zoneTimeoutRef.current = setTimeout(() => {
-//         if (zoneName && zoneInfo[zoneName]) {
-//           setShowVideo(true);
-//           if (videoPlayerRef.current) {
-//             videoPlayerRef.current.src = zoneInfo[zoneName].videoUrl;
-//             videoPlayerRef.current.load();
-//             videoPlayerRef.current.play().catch(e => console.error("Video play error:", e));
-//           }
-//         }
-//       }, 300);
-//     }
-//   };
-
-
-const handleZoneDetection = (zoneName) => {
-    if (!zoneName || zoneInfo[zoneName] === undefined) {
-      setCurrentZone(null);
-      return;
-    }
-  
-    setCurrentZone(zoneName);
-  
-    // If video has already been shown for this zone, skip
-    if (videoShownForZone === zoneName) return;
-  
-    // Clear any existing timeout
-    if (zoneTimeoutRef.current) {
-      clearTimeout(zoneTimeoutRef.current);
-    }
-  
-    zoneTimeoutRef.current = setTimeout(() => {
-      setShowVideo(true);
-      setVideoShownForZone(zoneName); // Mark this zone as shown
-  
-      if (videoPlayerRef.current) {
-        videoPlayerRef.current.src = zoneInfo[zoneName].videoUrl;
-        videoPlayerRef.current.load();
-        videoPlayerRef.current.play().catch((e) =>
-          console.error("Video play error:", e)
-        );
+      // Clear any existing timeout
+      if (zoneTimeoutRef.current) {
+        clearTimeout(zoneTimeoutRef.current);
       }
-    }, 500); // or 500ms
+      
+      // Set a new timeout to show video after 1 second of continuous detection
+      zoneTimeoutRef.current = setTimeout(() => {
+        if (zoneName && zoneInfo[zoneName]) {
+          setShowVideo(true);
+          if (videoPlayerRef.current) {
+            videoPlayerRef.current.src = zoneInfo[zoneName].videoUrl;
+            videoPlayerRef.current.load();
+            videoPlayerRef.current.play().catch(e => console.error("Video play error:", e));
+          }
+        }
+      }, 300);
+    }
   };
+
+
+// const handleZoneDetection = (zoneName) => {
+//     if (!zoneName || zoneInfo[zoneName] === undefined) {
+//       setCurrentZone(null);
+//       return;
+//     }
+  
+//     setCurrentZone(zoneName);
+  
+//     // If video has already been shown for this zone, skip
+//     if (videoShownForZone === zoneName) return;
+  
+//     // Clear any existing timeout
+//     if (zoneTimeoutRef.current) {
+//       clearTimeout(zoneTimeoutRef.current);
+//     }
+  
+//     zoneTimeoutRef.current = setTimeout(() => {
+//       setShowVideo(true);
+//       setVideoShownForZone(zoneName); // Mark this zone as shown
+  
+//       if (videoPlayerRef.current) {
+//         videoPlayerRef.current.src = zoneInfo[zoneName].videoUrl;
+//         videoPlayerRef.current.load();
+//         videoPlayerRef.current.play().catch((e) =>
+//           console.error("Video play error:", e)
+//         );
+//       }
+//     }, 500); // or 500ms
+//   };
   
 
 
