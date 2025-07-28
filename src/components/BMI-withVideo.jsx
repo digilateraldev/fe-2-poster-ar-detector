@@ -560,9 +560,7 @@ const BMIPointerRobust = () => {
           height: "2200px",
           transformOrigin: "top left",
           border: "5px dashed red",
-          transform: "scale(0)",
-           opacity: 0,             // Prevent flash of full size
-    transition: "opacity 0.2s ease",
+          transform: "scale(0.2)",
         }}
       >
         <video
@@ -582,7 +580,7 @@ const BMIPointerRobust = () => {
           width={1517}
           height={2200}
           style={{
-            // position: "absolute",
+            position: "absolute",
             width: "1517px",
             height: "2200px",
             display: "none",
