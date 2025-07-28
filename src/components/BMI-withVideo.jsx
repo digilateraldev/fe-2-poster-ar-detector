@@ -552,29 +552,26 @@ const BMIPointerRobust = () => {
     <div
       className="wrapper"
       style={{
-        // position: "relative",
-        width: "100vw",
-        height: "calc(100vw * 2200 / 1517)",
-        // maxHeight: "100vh",
-        // maxWidth: "calc(100vh * 1517 / 2200)",
-        margin: "auto",
-        background: "black",
-        objectFit: "contain",
-        //  overflow: "hidden",
-         
+     position: "relative",
+    width: "100%",
+    maxWidth: "100vw",
+    aspectRatio: "1517 / 2200", // Ensures it scales proportionally
+    margin: "0 auto",
+    overflow: "hidden",
+    background: "#000", // Optional background color
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
       }}
     >
       <div
         id="container"
         ref={containerRef}
         style={{
-          // position: "absolute",
-          width: "1517px",
-          height: "2200px",
-          transformOrigin: "top left",
-          border: "5px dashed red",
-          transform: "scale(0.2)",
-        }}
+      width: "100%",
+      height: "100%",
+      position: "relative",
+    }}
       >
         <video
           ref={videoRef}
@@ -632,7 +629,7 @@ const BMIPointerRobust = () => {
             background: "rgba(0,0,0,0.7)",
             color: "white",
             padding: "15px",
-            fontSize: "24px",
+            fontSize: "10px",
             borderRadius: "10px",
             fontFamily: "Arial",
           }}
@@ -650,7 +647,7 @@ const BMIPointerRobust = () => {
               background: "rgba(255, 165, 0, 0.85)",
               color: "black",
               padding: "12px",
-              fontSize: "18px",
+              fontSize: "8px",
               borderRadius: "8px",
               fontFamily: "Arial",
               fontWeight: "bold",
@@ -672,13 +669,14 @@ const BMIPointerRobust = () => {
             borderRadius: "5px",
             textAlign: "center",
             fontFamily: "Arial",
+            fontSize: "10px"
           }}
         >
           Align your poster with the frame and show all 4 markers
           <br />
           Point with your index finger
           <br />
-          <span style={{fontSize: "14px", opacity: 0.8}}>
+          <span style={{fontSize: "8px", opacity: 0.8}}>
             Mode: {detectionMode} | 
             Pointer: {detectionMode === "hand" ? "🟢 Green (Hand)" : "🟠 Orange (Fingertip)"}
           </span>
