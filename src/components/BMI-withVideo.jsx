@@ -524,9 +524,22 @@ const BMIPointerRobust = () => {
         const wrapper = containerRef.current?.parentElement;
         if (!wrapper || !containerRef.current) return;
 
-        const scaleX = wrapper.clientWidth / 1517;
-        const scaleY = wrapper.clientHeight / 2200;
-        containerRef.current.style.transform = `scale(${scaleX}, ${scaleY})`;
+        // const scaleX = wrapper.clientWidth / 1517;
+        // const scaleY = wrapper.clientHeight / 2200;
+        // containerRef.current.style.transform = `scale(${scaleX}, ${scaleY})`;
+        // Get the actual available space
+      const availableWidth = wrapper.clientWidth;
+      const availableHeight = wrapper.clientHeight;
+      
+      // Calculate scale to fit the container within the available space
+      const scaleX = availableWidth / 1517;
+      const scaleY = availableHeight / 2200;
+      
+      // Use the smaller scale to ensure the entire container fits
+      const scale = Math.min(scaleX, scaleY);
+      
+      containerRef.current.style.transform = `scale(${scale})`;
+      containerRef.current.style.transformOrigin = 'top left';
       };
 
       scaleContainer();
@@ -538,17 +551,29 @@ const BMIPointerRobust = () => {
   return (
     <div
       className="wrapper"
-      style={{
-        // position: "relative",
-        width: "100vw",
-        height: "calc(100vw * 2200 / 1517)",
-        // maxHeight: "100vh",
-        // maxWidth: "calc(100vh * 1517 / 2200)",
-        margin: "auto",
-        background: "black",
-        objectFit: "contain",
-         overflow: "hidden",
+      // style={{
+      //   // position: "relative",
+      //   width: "100vw",
+      //   height: "calc(100vw * 2200 / 1517)",
+      //   // maxHeight: "100vh",
+      //   // maxWidth: "calc(100vh * 1517 / 2200)",
+      //   margin: "auto",
+      //   background: "black",
+      //   objectFit: "contain",
+      //    overflow: "hidden",
          
+      // }}
+      style={{
+        position: "relative",
+        width: "100vw",
+        height: "100vh",
+        margin: "0",
+        padding: "0",
+        background: "black",  
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <div
