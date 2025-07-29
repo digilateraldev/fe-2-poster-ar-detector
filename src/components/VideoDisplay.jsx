@@ -1,175 +1,90 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
-const VideoDisplay = () => {
-  const { qrId } = useParams();
-  const navigate = useNavigate();
+const VideoDisplay = ({ zoneName, zoneInfo, onRetry, onClose }) => {
   const videoRef = useRef(null);
-  const [videoData, setVideoData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedRegion, setSelectedRegion] = useState(null);
 
-  // Video mapping based on region selection
-  const videoMapping = {
-    hurry: '/videos/hurry.mp4',
-    distracted: '/videos/distracted.mp4',
-    mindfully: '/videos/mindfully.mp4'
-  };
 
-  // Region polygon coordinates
-  const regionPolygons = {
-    distracted: [
-      [703, 671],
-      [1622, 652],
-      [1628, 1312],
-      [823, 1328],
-    ],
-    hurry: [
-      [82, 1125],
-      [748, 1133],
-      [740, 1850],
-      [66, 1860],
-    ],
-    mindfully: [
-      [852, 1534],
-      [1620, 1531],
-      [1633, 2186],
-      [802, 2192],
-    ],
-  };
-
-  // Point-in-polygon detection using ray casting algorithm
-  const isPointInPolygon = (point, polygon) => {
-    const [x, y] = point;
-    let inside = false;
-    
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      const [xi, yi] = polygon[i];
-      const [xj, yj] = polygon[j];
-      
-      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
-        inside = !inside;
-      }
-    }
-    
-    return inside;
-  };
-
-  // Function to determine region based on detection data
-  const determineRegion = (detectionData) => {
-    const { region } = detectionData;
-    
-    if (region && region.centerX !== undefined && region.centerY !== undefined) {
-      const detectedPoint = [region.centerX, region.centerY];
-      
-      // Check each region polygon
-      for (const [regionName, polygon] of Object.entries(regionPolygons)) {
-        if (isPointInPolygon(detectedPoint, polygon)) {
-          console.log(`Point [${detectedPoint}] detected in ${regionName} region`);
-          return regionName;
-        }
-      }
-      
-      console.log(`Point [${detectedPoint}] not in any defined region`);
-    }
-    
-    // return 'mindfully'; // default - commented out as requested
-    return null; // no region detected
-  };
 
   useEffect(() => {
-    // Get detection data from localStorage or sessionStorage
-    const detectionData = localStorage.getItem(`detection_${qrId}`);
-    
-    if (!detectionData) {
-      toast.error("No detection data found. Please scan again.");
-      navigate(`/scan/${qrId}`);
-      return;
-    }
-
-    try {
-      const parsedData = JSON.parse(detectionData);
-      setVideoData(parsedData);
-      
-      // Determine which region/video to show
-      const region = determineRegion(parsedData);
-      setSelectedRegion(region);
-      
-      console.log('Detection data:', parsedData);
-      console.log('Scaled region polygons:', regionPolygons);
-      console.log('VideoDisplay scaling factors - scaleX:', 1, 'scaleY:', 1);
-      console.log('Video path:', region ? videoMapping[region] : 'No region detected');
-      
-      // Debug: Show center point used for detection
-      if (parsedData.region) {
-        console.log('Center point used for detection:', [parsedData.region.centerX, parsedData.region.centerY]);
-      }
-      
-      // Check if regionName is already in the data (from ArUco detector)
-      if (parsedData.regionName) {
-        console.log('Region already detected in ArUco detector:', parsedData.regionName);
-        setSelectedRegion(parsedData.regionName);
-        setLoading(false);
-        return;
-      }
-      
+    if (zoneName && zoneInfo) {
+      console.log('VideoDisplay received:', { zoneName, zoneInfo });
       setLoading(false);
-    } catch (error) {
-      console.error("Error parsing detection data:", error);
-      setError("Invalid detection data");
+      
+      // Auto-play video when component loads
+      if (videoRef.current) {
+        videoRef.current.src = zoneInfo.videoUrl;
+        videoRef.current.load();
+        videoRef.current.play().catch(e => console.error("Video play error:", e));
+      }
+    } else {
+      setError("No zone information provided");
       setLoading(false);
     }
-  }, [qrId, navigate]);
+  }, [zoneName, zoneInfo]);
 
-  const handleReturnToScan = () => {
-    // Clear stored detection data
-    localStorage.removeItem(`detection_${qrId}`);
-    navigate(`/scan/${qrId}`);
+  const handleRetry = () => {
+    if (onRetry) {
+      onRetry();
+    }
+  };
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-600 text-lg">Loading video content...</p>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading video...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-red-600 text-xl mb-4">Error: {error}</div>
-        <button
-          onClick={handleReturnToScan}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Return to Scanner
-        </button>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️</div>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={handleRetry}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry Detection
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Header */}
-        {/* <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 sm:p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Video Content</h1>
-              <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Based on your detected region</p>
+              <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">
+                {zoneInfo?.title || 'Detection Result'}
+              </h1>
+              <p className="text-blue-100 text-sm sm:text-base">
+                Watch your personalized video below
+              </p>
             </div>
-            <button
-              onClick={handleReturnToScan}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base self-start sm:self-auto"
-            >
-              ← Back to Scanner
-            </button>
+            <div className="text-right">
+              <div className="text-xs sm:text-sm text-blue-200">Zone</div>
+              <div className="font-mono text-sm sm:text-base">{zoneName}</div>
+            </div>
           </div>
-        </div> */}
+        </div>
 
         {/* Detection Summary */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
@@ -197,43 +112,32 @@ const VideoDisplay = () => {
           {/* <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Video Content</h2> */}
           
           {/* Responsive video container */}
-          <div className="relative bg-black rounded-lg overflow-hidden w-full max-w-full">
-            {/* Mobile-first responsive aspect ratio with explicit constraints */}
-            <div className="aspect-video w-full max-w-full relative">
-              {selectedRegion ? (
-                <video 
-                  ref={videoRef}
-                  className="absolute inset-0 w-full h-full max-w-full max-h-full object-contain"
-                  controls
-                  autoPlay
-                  muted
-                  playsInline
-                  style={{ 
-                    maxWidth: '100%', 
-                    maxHeight: '100%',
-                    width: '100%',
-                    height: '100%'
-                  }}
-                  key={selectedRegion} // Force re-render when region changes
-                >
-                  <source src={videoMapping[selectedRegion]} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-white p-4">
-                  <div className="text-center">
-                    <div className="text-xl sm:text-2xl mb-2 sm:mb-4">⚠️</div>
-                    <div className="text-sm sm:text-lg mb-1 sm:mb-2">No Region Detected</div>
-                    <div className="text-xs sm:text-sm text-gray-300 mb-2">
-                      The detected point is not within any defined region boundaries
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      Detection area: {Math.round(videoData?.maxX - videoData?.minX || 0)} × {Math.round(videoData?.maxY - videoData?.minY || 0)} px
-                    </div>
+          <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
+            {zoneName && zoneInfo?.videoUrl ? (
+              <video
+                ref={videoRef}
+                className="w-full h-full object-contain"
+                controls
+                autoPlay
+                onError={(e) => {
+                  console.error('Video error:', e);
+                  setError('Failed to load video');
+                }}
+              >
+                <source src={zoneInfo.videoUrl} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-white p-4">
+                <div className="text-center">
+                  <div className="text-xl sm:text-2xl mb-2 sm:mb-4">⚠️</div>
+                  <div className="text-sm sm:text-lg mb-1 sm:mb-2">No Video Available</div>
+                  <div className="text-xs sm:text-sm text-gray-300 mb-2">
+                    Unable to load video for the selected zone
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Region Details */}
@@ -279,12 +183,18 @@ const VideoDisplay = () => {
           </div>
 
           {/* Action Buttons */}
-          {/* <div className="mt-6 flex gap-4 justify-center">
+          <div className="mt-6 flex gap-4 justify-center">
             <button
-              onClick={handleReturnToScan}
+              onClick={handleRetry}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Scan New Region
+              Try Again
+            </button>
+            <button
+              onClick={handleClose}
+              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Close
             </button>
             <button
               onClick={() => toast.success("Video shared successfully!")}
@@ -292,7 +202,7 @@ const VideoDisplay = () => {
             >
               Share Video
             </button>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>
