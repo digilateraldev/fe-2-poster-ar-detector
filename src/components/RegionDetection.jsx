@@ -51,6 +51,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
   const [currentZone, setCurrentZone] = useState(null);
   const [showSubmitButton, setShowSubmitButton] = useState(false);
   const [detectedZone, setDetectedZone] = useState(null);
+  const [submitStatus, setSubmitStatus] = useState('');
   
   const lastDetectedIdsRef = useRef([]);
   const hasBeenAligned = useRef(false);
@@ -287,8 +288,21 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
   };
 
   const handleSubmit = () => {
+    const timestamp = new Date().toLocaleTimeString();
+    setSubmitStatus(`${timestamp}: 🔴 SUBMIT CLICKED!`);
+    
+    console.log('🔴 SUBMIT CLICKED!');
+    console.log('detectedZone:', detectedZone);
+    console.log('zoneInfo[detectedZone]:', zoneInfo[detectedZone]);
+    console.log('onVideoRequested:', onVideoRequested);
+    
     if (detectedZone && zoneInfo[detectedZone] && onVideoRequested) {
+      setSubmitStatus(`${timestamp}: 🟢 Calling onVideoRequested with: ${detectedZone}`);
+      console.log('🟢 Calling onVideoRequested with:', detectedZone, zoneInfo[detectedZone]);
       onVideoRequested(detectedZone, zoneInfo[detectedZone]);
+    } else {
+      setSubmitStatus(`${timestamp}: 🔴 Submit failed - detectedZone: ${detectedZone}, zoneInfo: ${!!zoneInfo[detectedZone]}, onVideoRequested: ${!!onVideoRequested}`);
+      console.log('🔴 Submit failed - missing requirements');
     }
   };
 
@@ -420,9 +434,9 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
             }
           }
 
-          resultRef.current.textContent = detected
-            ? `Detected: ${detected} (${detectionMode} mode)`
-            : `Pointing outside zones (${detectionMode} mode)`;
+        //   resultRef.current.textContent = detected
+        //     ? `Detected: ${detected} (${detectionMode} mode)`
+        //     : `Pointing outside zones (${detectionMode} mode)`;
 
           handleZoneDetection(detected);
           setWarningMessage("");
@@ -683,6 +697,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
               display: "flex",
               gap: "15px",
               alignItems: "center",
+              flexDirection: "column",
             }}
           >
             <div
@@ -698,36 +713,57 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
             >
               Zone Detected: {detectedZone}
             </div>
-            <button
-              onClick={handleSubmit}
-              style={{
-                padding: "12px 20px",
-                fontSize: "16px",
-                backgroundColor: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
-            >
-              Submit
-            </button>
-            <button
-              onClick={handleRetry}
-              style={{
-                padding: "12px 20px",
-                fontSize: "16px",
-                backgroundColor: "#ff5722",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
-            >
-              Retry
-            </button>
+            
+            {/* Submit Status Display */}
+            {submitStatus && (
+              <div
+                style={{
+                  background: "rgba(255,255,0,0.9)",
+                  color: "black",
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  fontFamily: "monospace",
+                  fontSize: "12px",
+                  maxWidth: "300px",
+                  wordBreak: "break-word",
+                }}
+              >
+                {submitStatus}
+              </div>
+            )}
+            
+            <div style={{ display: "flex", gap: "15px" }}>
+              <button
+                onClick={handleSubmit}
+                style={{
+                  padding: "12px 20px",
+                  fontSize: "16px",
+                  backgroundColor: "#4CAF50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              >
+                Submit
+              </button>
+              <button
+                onClick={handleRetry}
+                style={{
+                  padding: "12px 20px",
+                  fontSize: "16px",
+                  backgroundColor: "#ff5722",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              >
+                Retry
+              </button>
+            </div>
           </div>
         )}
       </div>
