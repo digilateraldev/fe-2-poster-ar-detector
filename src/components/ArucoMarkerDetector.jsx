@@ -6,6 +6,7 @@ const ArucoMarkerDetector = ({ onRegionDetected }) => {
   const canvasRef = useRef(null);
   const [regionDetected, setRegionDetected] = useState(false);
   const [detectedRegion, setDetectedRegion] = useState(null);
+  const [detectionKey, setDetectionKey] = useState(0); // Key to force remount
 
   useEffect(() => {
     if (!window.AR) {
@@ -261,7 +262,7 @@ const ArucoMarkerDetector = ({ onRegionDetected }) => {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [detectionKey]); // Re-run effect when detectionKey changes
 
   const handleSubmit = () => {
     if (detectedRegion && onRegionDetected) {
@@ -273,7 +274,10 @@ const ArucoMarkerDetector = ({ onRegionDetected }) => {
     setRegionDetected(false);
     setDetectedRegion(null);
     toast.dismiss("region-detected");
-    window.location.reload(); // Simple restart
+    
+    // Force component remount by changing the key
+    // This will restart the entire detection process cleanly
+    setDetectionKey(prev => prev + 1);
   };
 
   return (
