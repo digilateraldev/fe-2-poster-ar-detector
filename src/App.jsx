@@ -13,9 +13,17 @@ function MainApp() {
   const [currentView, setCurrentView] = useState('detection'); // 'detection' or 'video'
   const [selectedZone, setSelectedZone] = useState(null);
   const [selectedZoneInfo, setSelectedZoneInfo] = useState(null);
+  const [currentlyDetectedZone, setCurrentlyDetectedZone] = useState(null);
 
-  const handleZoneSelected = (zoneName, zoneInfo) => {
-    console.log('Zone selected:', zoneName, zoneInfo);
+  // Real-time zone detection callback (updates immediately)
+  const handleZoneDetected = (zoneName, zoneInfo) => {
+    console.log('Zone detected in real-time:', zoneName, zoneInfo);
+    setCurrentlyDetectedZone(zoneName);
+  };
+
+  // Video request callback (when user clicks submit)
+  const handleVideoRequested = (zoneName, zoneInfo) => {
+    console.log('Video requested for zone:', zoneName, zoneInfo);
     setSelectedZone(zoneName);
     setSelectedZoneInfo(zoneInfo);
     setCurrentView('video');
@@ -24,12 +32,14 @@ function MainApp() {
   const handleRetry = () => {
     setSelectedZone(null);
     setSelectedZoneInfo(null);
+    setCurrentlyDetectedZone(null);
     setCurrentView('detection');
   };
 
   const handleClose = () => {
     setSelectedZone(null);
     setSelectedZoneInfo(null);
+    setCurrentlyDetectedZone(null);
     setCurrentView('detection');
   };
 
@@ -37,7 +47,8 @@ function MainApp() {
     <div className="App">
       {currentView === 'detection' ? (
         <RegionDetection 
-          onZoneSelected={handleZoneSelected}
+          onZoneDetected={handleZoneDetected}
+          onVideoRequested={handleVideoRequested}
           onRetry={handleRetry}
         />
       ) : (
@@ -47,6 +58,23 @@ function MainApp() {
           onRetry={handleRetry}
           onClose={handleClose}
         />
+      )}
+      
+      {/* Debug info for currently detected zone */}
+      {currentView === 'detection' && currentlyDetectedZone && (
+        <div style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          background: 'rgba(0,0,0,0.8)',
+          color: 'white',
+          padding: '10px',
+          borderRadius: '5px',
+          fontSize: '14px',
+          zIndex: 1000
+        }}>
+          Currently Detected: {currentlyDetectedZone}
+        </div>
       )}
     </div>
   );

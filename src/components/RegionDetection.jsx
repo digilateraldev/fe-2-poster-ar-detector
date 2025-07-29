@@ -37,7 +37,7 @@ const zoneInfo = {
   },
 };
 
-const RegionDetection = ({ onZoneSelected, onRetry }) => {
+const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const pointerRef = useRef(null);
@@ -265,12 +265,21 @@ const RegionDetection = ({ onZoneSelected, onRetry }) => {
       }
 
       if (zoneName) {
-        // Set timeout for consistent detection
+        // Immediately notify parent about zone detection
+        if (onZoneDetected && zoneInfo[zoneName]) {
+          onZoneDetected(zoneName, zoneInfo[zoneName]);
+        }
+        
+        // Set timeout for consistent detection to show submit button
         zoneTimeoutRef.current = setTimeout(() => {
           setDetectedZone(zoneName);
           setShowSubmitButton(true);
         }, 1000); // 1 second of consistent detection
       } else {
+        // Clear zone when no detection
+        if (onZoneDetected) {
+          onZoneDetected(null, null);
+        }
         setShowSubmitButton(false);
         setDetectedZone(null);
       }
@@ -278,8 +287,8 @@ const RegionDetection = ({ onZoneSelected, onRetry }) => {
   };
 
   const handleSubmit = () => {
-    if (detectedZone && zoneInfo[detectedZone]) {
-      onZoneSelected(detectedZone, zoneInfo[detectedZone]);
+    if (detectedZone && zoneInfo[detectedZone] && onVideoRequested) {
+      onVideoRequested(detectedZone, zoneInfo[detectedZone]);
     }
   };
 
