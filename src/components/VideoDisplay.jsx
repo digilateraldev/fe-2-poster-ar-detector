@@ -9,30 +9,17 @@ const VideoDisplay = ({ zoneName, zoneInfo, onRetry, onClose }) => {
 
 
   useEffect(() => {
-    console.log('🎥 VideoDisplay useEffect triggered');
-    console.log('zoneName:', zoneName);
-    console.log('zoneInfo:', zoneInfo);
-    
     if (zoneName && zoneInfo) {
-      console.log('🟢 VideoDisplay received valid props:', { zoneName, zoneInfo });
+      console.log('VideoDisplay received:', { zoneName, zoneInfo });
       setLoading(false);
       
       // Auto-play video when component loads
       if (videoRef.current) {
-        console.log('🎥 Setting video src to:', zoneInfo.videoUrl);
         videoRef.current.src = zoneInfo.videoUrl;
         videoRef.current.load();
-        videoRef.current.play().catch(e => {
-          console.error('🔴 Video play error:', e);
-          setError('Failed to play video: ' + e.message);
-        });
-      } else {
-        console.log('🔴 videoRef.current is null');
+        videoRef.current.play().catch(e => console.error("Video play error:", e));
       }
     } else {
-      console.log('🔴 VideoDisplay - No zone information provided');
-      console.log('zoneName is:', zoneName);
-      console.log('zoneInfo is:', zoneInfo);
       setError("No zone information provided");
       setLoading(false);
     }

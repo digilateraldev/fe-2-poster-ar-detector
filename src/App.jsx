@@ -14,7 +14,6 @@ function MainApp() {
   const [selectedZone, setSelectedZone] = useState(null);
   const [selectedZoneInfo, setSelectedZoneInfo] = useState(null);
   const [currentlyDetectedZone, setCurrentlyDetectedZone] = useState(null);
-  const [debugInfo, setDebugInfo] = useState([]);
 
   // Real-time zone detection callback (updates immediately)
   const handleZoneDetected = (zoneName, zoneInfo) => {
@@ -24,28 +23,13 @@ function MainApp() {
 
   // Video request callback (when user clicks submit)
   const handleVideoRequested = (zoneName, zoneInfo) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugInfo(prev => [...prev, 
-      `${timestamp}: 🎬 Video requested for zone: ${zoneName}`,
-      `${timestamp}: 🔄 Setting selectedZone to: ${zoneName}`,
-      `${timestamp}: 🔄 Setting currentView to: video`
-    ]);
-    
-    console.log('🎬 Video requested for zone:', zoneName, zoneInfo);
-    console.log('🔄 Setting selectedZone to:', zoneName);
-    console.log('🔄 Setting selectedZoneInfo to:', zoneInfo);
-    console.log('🔄 Setting currentView to: video');
-    
+    console.log('Video requested for zone:', zoneName, zoneInfo);
     setSelectedZone(zoneName);
     setSelectedZoneInfo(zoneInfo);
     setCurrentView('video');
-    
-    console.log('✅ State update calls completed');
   };
 
   const handleRetry = () => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugInfo(prev => [...prev, `${timestamp}: 🔄 Retry clicked - returning to detection`]);
     setSelectedZone(null);
     setSelectedZoneInfo(null);
     setCurrentlyDetectedZone(null);
@@ -53,8 +37,6 @@ function MainApp() {
   };
 
   const handleClose = () => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugInfo(prev => [...prev, `${timestamp}: ❌ Close clicked - returning to detection`]);
     setSelectedZone(null);
     setSelectedZoneInfo(null);
     setCurrentlyDetectedZone(null);
@@ -94,50 +76,6 @@ function MainApp() {
           Currently Detected: {currentlyDetectedZone}
         </div>
       )}
-      
-      {/* Visual Debug Panel */}
-      <div style={{
-        position: 'fixed',
-        bottom: '10px',
-        left: '10px',
-        right: '10px',
-        background: 'rgba(0,0,0,0.9)',
-        color: 'white',
-        padding: '10px',
-        borderRadius: '8px',
-        fontSize: '12px',
-        maxHeight: '200px',
-        overflowY: 'auto',
-        zIndex: 1000,
-        fontFamily: 'monospace'
-      }}>
-        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-           Debug Info (Current View: {currentView})
-        </div>
-        <div style={{ marginBottom: '5px' }}>
-          Selected Zone: {selectedZone || 'None'} | 
-          Zone Info: {selectedZoneInfo ? 'Yes' : 'No'}
-        </div>
-        {debugInfo.slice(-5).map((info, index) => (
-          <div key={index} style={{ fontSize: '11px', opacity: 0.8 }}>
-            {info}
-          </div>
-        ))}
-        <button 
-          onClick={() => setDebugInfo([])} 
-          style={{
-            marginTop: '5px',
-            padding: '2px 6px',
-            fontSize: '10px',
-            background: '#333',
-            color: 'white',
-            border: 'none',
-            borderRadius: '3px'
-          }}
-        >
-          Clear
-        </button>
-      </div>
     </div>
   );
 }

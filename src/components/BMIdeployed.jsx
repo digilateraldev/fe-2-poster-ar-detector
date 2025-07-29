@@ -1,3 +1,5 @@
+/* Integrated BMI Pointer with ArUco Markers + Hand/Fingertip Detection */
+
 import React, { useEffect, useRef, useState } from "react";
 import { Hands } from "@mediapipe/hands";
 
@@ -33,33 +35,32 @@ const zoneInfo = {
   },
   distracted: {
     title: "I eat while distracted",
-    videoUrl: "/videos/distracted.mp4",
+    videoUrl: "../../public/videos/distracted.mp4",
   },
 };
 
-const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
+const BMISelectionApp = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const pointerRef = useRef(null);
   const resultRef = useRef(null);
   const containerRef = useRef(null);
   const detectionCanvasRef = useRef(null);
+  const videoPlayerRef = useRef(null);
+  // const [videoShownForZone, setVideoShownForZone] = useState(null);
 
   const [posterInView, setPosterInView] = useState(false);
   const [warningMessage, setWarningMessage] = useState("Initializing...");
-  const [detectionMode, setDetectionMode] = useState("hand");
+  const [detectionMode, setDetectionMode] = useState("hand"); // "hand" or "fingertip"
   const [currentZone, setCurrentZone] = useState(null);
-  const [showSubmitButton, setShowSubmitButton] = useState(false);
-  const [detectedZone, setDetectedZone] = useState(null);
-  
+  const [showVideo, setShowVideo] = useState(false);
   const lastDetectedIdsRef = useRef([]);
   const hasBeenAligned = useRef(false);
   const handsRef = useRef(null);
   const handDetectionFailCount = useRef(0);
   const zoneTimeoutRef = useRef(null);
-  const detectionTimeoutRef = useRef(null);
 
-  const cornerZones = {
+ const cornerZones = {
     2: { x: 200, y: 50 },
     13: { x: 480, y: 50 },
     6: { x: 190, y: 450 },
@@ -118,7 +119,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
     return [h, s, v];
   };
 
-  // Fingertip detection using contours
+  // Fingertip detection using contours (adapted from Python code)
   const detectFingertipFromContours = (imageData, width, height) => {
     try {
       const canvas = detectionCanvasRef.current;
@@ -128,21 +129,26 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
       canvas.width = width;
       canvas.height = height;
 
+      // Put image data on canvas
       ctx.putImageData(imageData, 0, 0);
 
+      // Get pixel data
       const data = imageData.data;
       const skinMask = new Uint8ClampedArray(width * height);
 
+      // HSV skin color detection (matching Python implementation)
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i] / 255.0;
         const g = data[i + 1] / 255.0;
         const b = data[i + 2] / 255.0;
 
+        // Convert RGB to HSV
         const hsv = rgbToHsv(r, g, b);
         const h = hsv[0];
         const s = hsv[1];
         const v = hsv[2];
 
+        // HSV skin color range (from Python: lower=[0,48,80], upper=[20,255,255])
         const isSkin =
           h >= 0 &&
           h <= 20 &&
@@ -154,16 +160,19 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
         skinMask[Math.floor(i / 4)] = isSkin ? 255 : 0;
       }
 
+      // Find contours (simplified approach)
       const contours = findContours(skinMask, width, height);
 
       if (contours.length === 0) return null;
 
+      // Find largest contour
       let largestContour = contours[0];
       let maxArea = contourArea(largestContour);
 
       for (let i = 1; i < contours.length; i++) {
         const area = contourArea(contours[i]);
         if (area > maxArea && area > 500) {
+          // Minimum area threshold
           maxArea = area;
           largestContour = contours[i];
         }
@@ -171,6 +180,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
 
       if (maxArea < 500) return null;
 
+      // Find topmost point (fingertip)
       let topmost = largestContour[0];
       for (const point of largestContour) {
         if (point.y < topmost.y) {
@@ -188,6 +198,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
     }
   };
 
+  // Simplified contour finding
   const findContours = (mask, width, height) => {
     const contours = [];
     const visited = new Array(width * height).fill(false);
@@ -198,6 +209,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
         if (mask[idx] === 255 && !visited[idx]) {
           const contour = traceContour(mask, width, height, x, y, visited);
           if (contour.length > 10) {
+            // Minimum contour size
             contours.push(contour);
           }
         }
@@ -207,6 +219,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
     return contours;
   };
 
+  // Simple contour tracing
   const traceContour = (mask, width, height, startX, startY, visited) => {
     const contour = [];
     const stack = [{ x: startX, y: startY }];
@@ -229,6 +242,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
       visited[idx] = true;
       contour.push({ x, y });
 
+      // Add 8-connected neighbors
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
@@ -256,49 +270,65 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
     if (zoneName !== currentZone) {
       setCurrentZone(zoneName);
 
-      // Clear any existing timeouts
+      // Clear any existing timeout
       if (zoneTimeoutRef.current) {
         clearTimeout(zoneTimeoutRef.current);
       }
-      if (detectionTimeoutRef.current) {
-        clearTimeout(detectionTimeoutRef.current);
-      }
 
-      if (zoneName) {
-        // Immediately notify parent about zone detection
-        if (onZoneDetected && zoneInfo[zoneName]) {
-          onZoneDetected(zoneName, zoneInfo[zoneName]);
+      // Set a new timeout to show video after 1 second of continuous detection
+      zoneTimeoutRef.current = setTimeout(() => {
+        if (zoneName && zoneInfo[zoneName]) {
+          setShowVideo(true);
+          if (videoPlayerRef.current) {
+            videoPlayerRef.current.src = zoneInfo[zoneName].videoUrl;
+            videoPlayerRef.current.load();
+            videoPlayerRef.current.play().catch(e => console.error("Video play error:", e));
+          }
         }
-        
-        // Set timeout for consistent detection to show submit button
-        zoneTimeoutRef.current = setTimeout(() => {
-          setDetectedZone(zoneName);
-          setShowSubmitButton(true);
-        }, 1000); // 1 second of consistent detection
-      } else {
-        // Clear zone when no detection
-        if (onZoneDetected) {
-          onZoneDetected(null, null);
-        }
-        setShowSubmitButton(false);
-        setDetectedZone(null);
-      }
+      }, 300);
     }
   };
 
-  const handleSubmit = () => {
-    if (detectedZone && zoneInfo[detectedZone] && onVideoRequested) {
-      onVideoRequested(detectedZone, zoneInfo[detectedZone]);
-    }
-  };
+  // const handleZoneDetection = (zoneName) => {
+  //   if (!zoneName || zoneInfo[zoneName] === undefined) {
+  //     setCurrentZone(null);
+  //     return;
+  //   }
 
-  const handleRetry = () => {
+  //   setCurrentZone(zoneName);
+
+  //   // If video has already been shown for this zone, skip
+  //   if (videoShownForZone === zoneName) return;
+
+  //   // Clear any existing timeout
+  //   if (zoneTimeoutRef.current) {
+  //     clearTimeout(zoneTimeoutRef.current);
+  //   }
+
+  //   zoneTimeoutRef.current = setTimeout(() => {
+  //     setShowVideo(true);
+  //     setVideoShownForZone(zoneName); // Mark this zone as shown
+
+  //     if (videoPlayerRef.current) {
+  //       videoPlayerRef.current.src = zoneInfo[zoneName].videoUrl;
+  //       videoPlayerRef.current.load();
+  //       videoPlayerRef.current
+  //         .play()
+  //         .catch((e) => console.error("Video play error:", e));
+  //     }
+  //   }, 500); // or 500ms
+  // };
+
+  const handleCloseVideo = () => {
+    setShowVideo(false);
     setCurrentZone(null);
-    setDetectedZone(null);
-    setShowSubmitButton(false);
-    hasBeenAligned.current = false;
-    if (onRetry) {
-      onRetry();
+    // setVideoShownForZone(null);
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.pause();
+      videoPlayerRef.current.currentTime = 0;
+    }
+    if (zoneTimeoutRef.current) {
+      clearTimeout(zoneTimeoutRef.current);
     }
   };
 
@@ -360,6 +390,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
       hands.onResults((results) => {
         let fingerTip = null;
 
+        // First try hand detection
         if (
           results.multiHandLandmarks &&
           results.multiHandLandmarks.length > 0
@@ -374,9 +405,11 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
         } else {
           handDetectionFailCount.current++;
 
+          // If hand detection fails for several frames, try fingertip detection
           if (handDetectionFailCount.current > 3) {
             setDetectionMode("fingertip");
 
+            // Capture current frame for fingertip detection
             const canvas = canvasRef.current;
             const video = videoRef.current;
             if (canvas && video) {
@@ -405,6 +438,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
           }
         }
 
+        // Process detected fingertip
         if (fingerTip) {
           const { x, y } = fingerTip;
 
@@ -436,6 +470,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
         }
       });
 
+      // ArUco marker detection (from workingBmi.jsx)
       const detector = new window.AR.Detector();
 
       const detectLoop = async () => {
@@ -448,6 +483,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+        // Detect ArUco markers using js-aruco
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const markers = detector.detect(imageData);
 
@@ -464,6 +500,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
           });
         }
 
+        // Raw IDs (all detected markers)
         const detectedIds = markers.map((m) => m.id).sort();
 
         const matchedMarkers = markers.filter((marker) =>
@@ -479,6 +516,7 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
           lastDetectedIdsRef.current = matchedIds;
         }
 
+        // Alignment logic
         if (!hasBeenAligned.current && matchedIds.length === 4) {
           hasBeenAligned.current = true;
           console.log("Poster aligned!");
@@ -522,217 +560,90 @@ const RegionDetection = ({ onZoneDetected, onVideoRequested, onRetry }) => {
       window.addEventListener("resize", scaleContainer);
       detectLoop();
     });
-
-    return () => {
-      // Cleanup
-      if (zoneTimeoutRef.current) {
-        clearTimeout(zoneTimeoutRef.current);
-      }
-      if (detectionTimeoutRef.current) {
-        clearTimeout(detectionTimeoutRef.current);
-      }
-    };
   }, []);
 
   return (
-    <div
-      className="wrapper"
-      style={{
-        position: "relative",
-        width: "100vw",
-        height: "calc(100vw * 2200 / 1517)",
-        maxHeight: "100vh",
-        maxWidth: "calc(100vh * 1517 / 2200)",
-        margin: "auto",
-        background: "black",
-        objectFit: "contain",
-      }}
-    >
-      <div
-        id="container"
-        ref={containerRef}
-        style={{
-          position: "absolute",
-          width: "1517px",
-          height: "2200px",
-          transformOrigin: "top left",
-          border: "5px dashed red",
-        }}
-      >
+    <div className="flex flex-col items-center justify-center w-full h-screen bg-black overflow-hidden">
+      <div className="relative w-full h-full max-w-full max-h-full">
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            background: "rgba(0,0,0,0.2)",
-          }}
+          className="absolute inset-0 w-full h-full object-cover"
         />
 
         <canvas
           ref={canvasRef}
-          width={1517}
-          height={2200}
-          style={{
-            position: "absolute",
-            width: "1517px",
-            height: "2200px",
-            display: "none",
-          }}
+          className="absolute inset-0 w-full h-full hidden"
         />
 
         <canvas
           ref={detectionCanvasRef}
-          style={{
-            display: "none",
-          }}
+          className="hidden"
         />
 
         <div
           ref={pointerRef}
+          className="absolute w-8 h-8 bg-green-500 rounded-full border-2 border-white transform -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden"
           style={{
-            position: "absolute",
-            width: "30px",
-            height: "30px",
-            background:
-              detectionMode === "hand"
-                ? "rgba(0,255,0,0.5)"
-                : "rgba(255,165,0,0.7)",
-            borderRadius: "50%",
-            border: "2px solid white",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-            display: "none",
+            background: detectionMode === "hand" 
+              ? "rgba(0,255,0,0.5)" 
+              : "rgba(255,165,0,0.7)"
           }}
         />
 
         <div
           ref={resultRef}
-          style={{
-            position: "absolute",
-            bottom: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "rgba(0,0,0,0.7)",
-            color: "white",
-            padding: "15px",
-            fontSize: "24px",
-            borderRadius: "10px",
-            fontFamily: "Arial",
-          }}
+          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg text-sm md:text-base text-center max-w-[90%]"
         >
           Loading...
         </div>
 
         {warningMessage && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "80px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              background: "rgba(255, 165, 0, 0.85)",
-              color: "black",
-              padding: "12px",
-              fontSize: "18px",
-              borderRadius: "8px",
-              fontFamily: "Arial",
-              fontWeight: "bold",
-            }}
-          >
+          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-orange-200 text-black px-3 py-2 rounded-lg font-bold text-sm text-center max-w-[90%]">
             ⚠️ {warningMessage}
           </div>
         )}
 
-        <div
-          style={{
-            position: "absolute",
-            top: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "rgba(0,0,0,0.7)",
-            color: "white",
-            padding: "10px",
-            borderRadius: "5px",
-            textAlign: "center",
-            fontFamily: "Arial",
-          }}
-        >
+        <div className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg text-xs md:text-sm text-center max-w-[90%]">
           Align your poster with the frame and show all 4 markers
           <br />
           Point with your index finger
           <br />
-          <span style={{ fontSize: "14px", opacity: 0.8 }}>
+          <span className="opacity-80">
             Mode: {detectionMode} | Pointer:{" "}
-            {detectionMode === "hand"
-              ? "🟢 Green (Hand)"
-              : "🟠 Orange (Fingertip)"}
+            {detectionMode === "hand" ? "🟢 (Hand)" : "🟠 (Fingertip)"}
           </span>
         </div>
-
-        {/* Submit and Retry Buttons */}
-        {showSubmitButton && detectedZone && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "120px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              display: "flex",
-              gap: "15px",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                background: "rgba(0,255,0,0.9)",
-                color: "black",
-                padding: "10px 15px",
-                borderRadius: "8px",
-                fontFamily: "Arial",
-                fontWeight: "bold",
-                fontSize: "16px",
-              }}
-            >
-              Zone Detected: {detectedZone}
-            </div>
-            <button
-              onClick={handleSubmit}
-              style={{
-                padding: "12px 20px",
-                fontSize: "16px",
-                backgroundColor: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
-            >
-              Submit
-            </button>
-            <button
-              onClick={handleRetry}
-              style={{
-                padding: "12px 20px",
-                fontSize: "16px",
-                backgroundColor: "#ff5722",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* Video Player Modal - same as before */}
+      {showVideo && currentZone && zoneInfo[currentZone] && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex flex-col justify-center items-center z-50">
+          <div className="max-w-[90vw] max-h-[80vh] mb-5 text-center">
+            <h2 className="text-white mb-5 text-lg md:text-xl">
+              {zoneInfo[currentZone].title}
+            </h2>
+            <video
+              ref={videoPlayerRef}
+              controls
+              autoPlay
+              className="max-w-full max-h-[60vh]"
+            >
+              <source src={zoneInfo[currentZone].videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <button
+            onClick={handleCloseVideo}
+            className="px-5 py-2 text-lg bg-orange-600 text-white border-none rounded cursor-pointer"
+          >
+            Close Video
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default RegionDetection;
+export default BMISelectionApp;
