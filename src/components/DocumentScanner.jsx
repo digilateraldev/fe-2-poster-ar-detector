@@ -114,8 +114,8 @@ const DocumentScanner = () => {
               {/* <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
                 <span className="text-green-600 font-bold text-lg">2</span>
               </div> */}
-              <h3 className="text-gray-800 mb-2">Detect Region</h3>
-              <p className="text-gray-600 text-sm">System will detect your hand/fingertip region automatically</p>
+              {/* <h3 className="text-gray-800 mb-2">Detect Region</h3>
+              <p className="text-gray-600 text-sm">System will detect your hand/fingertip region automatically</p> */}
             </div>
             <div className="flex flex-col items-center">
               {/* <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
