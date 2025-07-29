@@ -13,10 +13,12 @@
     "@mediapipe/hands": "^0.4.1675469240",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.22.0",
+    "axios": "^1.6.0",
     "js-aruco": "^0.1.0",
     "nodemon": "^3.1.10",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.4.1",
     "react-router-dom": "^7.7.1"
   },
   "devDependencies": {
